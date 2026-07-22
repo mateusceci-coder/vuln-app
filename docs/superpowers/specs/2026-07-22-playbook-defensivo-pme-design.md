@@ -41,9 +41,12 @@ adotar hoje para se defender exatamente dos vetores que o lab planta, com:
 ## Não-objetivos
 
 - **Não corrigir** as vulnerabilidades do app — elas são o produto do lab.
-- **Não implementar** agora o backdoor `express-audit-log` nem o SSRF-kb (estão
-  em [2026-07-22-ssrf-realista-e-supply-chain-design.md](2026-07-22-ssrf-realista-e-supply-chain-design.md),
-  aguardando implementação). O playbook os referencia como estado-alvo.
+- **Não implementar** agora o refactor SSRF-kb (`GET /api/admin/kb?ref=`, em
+  [2026-07-22-ssrf-realista-e-supply-chain-design.md](2026-07-22-ssrf-realista-e-supply-chain-design.md),
+  ainda não no código — hoje o SSRF é o `POST /api/admin/health-check`). O
+  playbook referencia o `/kb` como estado-alvo. **Nota:** o backdoor
+  `express-audit-log` **já está implementado e wired** (`backend/vendor/` +
+  `backend/src/index.js`), então seu demo é validável ao vivo — não é estado-alvo.
 - **Não adicionar** testes automatizados (o projeto não usa framework de teste;
   verificação é manual, como o resto do repo).
 - **Não** transformar isto em produto/SaaS nem construir a versão segura
@@ -91,7 +94,7 @@ Linhas (mínimo):
 6. SSRF (`GET /api/admin/kb?ref=`, estado-alvo) — bypass de baseURL do axios
 7. DoS de upload (multer) — sem limite de tamanho/quantidade
 8. Auth fraca (login) — MD5, JWT sem `algorithms`, segredo fraco, sem rate-limit
-9. Backdoor slopsquattado (`express-audit-log`, estado-alvo) — dep sem revisão
+9. Backdoor slopsquattado (`express-audit-log`, **já no código**) — dep sem revisão
 
 Mais as 4 dependências com CVE (jsonwebtoken, express, axios, multer) na coluna
 "controle shift-left" via Trivy.
@@ -133,10 +136,10 @@ Trivy lista os 4 CVEs mas fica cego pro backdoor. Fecha com as guardas práticas
 da dev shop (revisão de dep, allowlist, lockfile + `npm ci`) e faz a ponte pro
 runtime (Unidade 2).
 
-**Depende de:** para a demonstração ao vivo "Trivy não pega o slopsquat", a dep
-`express-audit-log` precisa existir no código (hoje não existe). O texto é
-escrito contra o estado-alvo; a validação ao vivo desse demo específico fica
-marcada como pendente até o feature entrar.
+**Estado atual:** o `express-audit-log` **já existe** no repo
+(`backend/vendor/express-audit-log/`, wired em `backend/src/index.js`), então a
+demonstração ao vivo "Trivy lista os 4 CVEs mas é cego pro backdoor" é
+**validável agora** neste repo — não é estado-alvo.
 
 ## Unidade 2 — Camada de runtime (autorada aqui, validada no lab)
 
@@ -178,12 +181,15 @@ Dev shop constrói com IA
 
 **Validável neste repo (prova real entregue no fim):**
 - Trivy rodando contra o backend, mostrando os 4 CVEs e o build falhando.
+- O demo de supply-chain: Trivy lista os 4 CVEs e **não** reporta o
+  `express-audit-log` (o backdoor já está no repo, sem CVE público).
 - Sintaxe das regras (Suricata `-T`; XML do Wazuh bem-formado).
 - Checklist apontando para arquivos/linhas que de fato existem.
 
 **Validável só no lab (pelo autor, via runbooks):**
 - Comportamento das regras Wazuh/Suricata contra os ataques reais.
-- O demo "Trivy não pega o slopsquat" (pendente a dep entrar no código).
+- O demo ao vivo do SSRF via `/kb` (pendente o refactor SSRF-kb entrar; hoje o
+  código é `/health-check`).
 
 **Pronto quando:** os 4 docs do guia escritos (PT, tabela-espinha com as 9+
 linhas) · `ci/` com Trivy + workflow + pre-commit · `deteccao/` com regras
@@ -196,6 +202,7 @@ Wazuh + Suricata anotadas + runbooks · `playbook/README.md` amarrando tudo.
 - **Idioma:** português, consistente com o resto do projeto.
 - **Detecções "do zero" vs. infra fora do repo:** resolvido pela divisão de
   validação acima — sintaxe aqui, comportamento no lab via runbook.
-- **Sequência com o feature slopsquat/SSRF-kb:** o playbook é escrito contra o
-  estado-alvo; a validação ao vivo do demo de slopsquat aguarda a implementação
-  daquele feature, sem bloquear o resto.
+- **Sequência com o refactor SSRF-kb:** a linha de SSRF é escrita contra o
+  estado-alvo (`/kb`); sua validação ao vivo aguarda o refactor entrar (hoje o
+  código é `/health-check`), sem bloquear o resto. O backdoor slopsquattado, ao
+  contrário, **já está no código** e valida ao vivo.
