@@ -59,10 +59,10 @@ Esqueleto inicial, ainda não implementa a especificação:
 
 | Pacote | Versão fixada | CVE | CWE | Rota associada |
 |---|---|---|---|---|
-| jsonwebtoken | ≤ 8.5.1 | CVE-2022-23529/23540/23541 | CWE-287 (auth bypass) | login / verificação de JWT |
+| jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539/23540/23541 | CWE-287 (auth bypass) | login / verificação de JWT |
 | express | < 4.19.2 | CVE-2024-29041 | CWE-601 (open redirect) | — |
 | axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) | "verificar ambiente" (admin) |
-| multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-47944 (+47935/48997) | CWE-248 (DoS) | upload de anexos |
+| multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) | upload de anexos |
 
 `jsonwebtoken` é a mais relevante para a tese: não especificar `algorithms`
 em `jwt.verify()` é um erro típico de código gerado por IA sem revisão.
