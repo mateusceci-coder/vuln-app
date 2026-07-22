@@ -1,0 +1,30 @@
+.wrap {
+  max-width: 680px;
+  margin: 0 auto;
+}
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  transition: color 0.14s ease;
+}
+.back:hover {
+  color: var(--text);
+}
+.card {
+  padding: 26px;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}

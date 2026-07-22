@@ -1,0 +1,75 @@
+.toolbar {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.searchForm {
+  flex: 1;
+}
+.filtro {
+  min-width: 190px;
+}
+
+.desc {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  max-width: 46ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+.contagem {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pagerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.pagerBtn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+.pagerBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pagerInfo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 0 8px;
+}
+
+@media (max-width: 640px) {
+  .toolbar {
+    flex-direction: column;
+  }
+  .filtro {
+    min-width: 0;
+  }
+}

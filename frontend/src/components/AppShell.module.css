@@ -1,0 +1,36 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  padding: 30px clamp(16px, 4vw, 40px) 72px;
+}
+
+.inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(6, 8, 13, 0.5);
+  backdrop-filter: blur(2px);
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .scrim {
+    display: block;
+  }
+}

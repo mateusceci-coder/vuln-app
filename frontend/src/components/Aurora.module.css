@@ -1,0 +1,108 @@
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.band {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  mix-blend-mode: screen;
+  will-change: transform;
+  animation: aurora-drift 22s ease-in-out infinite;
+}
+
+.teal {
+  background: radial-gradient(circle, var(--aurora-teal), transparent 68%);
+  animation-duration: 24s;
+}
+.violet {
+  background: radial-gradient(circle, var(--aurora-violet), transparent 68%);
+  animation-duration: 30s;
+  animation-delay: -6s;
+}
+.green {
+  background: radial-gradient(circle, var(--aurora-green), transparent 70%);
+  animation-duration: 27s;
+  animation-delay: -12s;
+}
+
+/* ---- ambient: faint glow bleeding from the top-left ---- */
+.ambient .band {
+  opacity: 0.16;
+  filter: blur(90px);
+}
+.ambient .teal {
+  width: 460px;
+  height: 340px;
+  top: -180px;
+  left: -120px;
+}
+.ambient .violet {
+  width: 420px;
+  height: 320px;
+  top: -160px;
+  left: 120px;
+}
+.ambient .green {
+  width: 380px;
+  height: 300px;
+  top: -200px;
+  left: 340px;
+}
+
+/* ---- full: login night sky ---- */
+.full .band {
+  opacity: 0.42;
+}
+.full .teal {
+  width: 620px;
+  height: 460px;
+  top: -140px;
+  left: -80px;
+}
+.full .violet {
+  width: 720px;
+  height: 520px;
+  top: -80px;
+  right: -120px;
+  left: auto;
+}
+.full .green {
+  width: 560px;
+  height: 460px;
+  bottom: -220px;
+  left: 30%;
+  top: auto;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 28% 68%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1.6px 1.6px at 46% 14%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.1px 1.1px at 64% 52%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 78% 30%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.2px 1.2px at 88% 74%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.3px 1.3px at 36% 88%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 8% 54%, rgba(255, 255, 255, 0.5), transparent);
+  opacity: 0.5;
+}
+
+[data-theme="light"] .band {
+  mix-blend-mode: normal;
+}
+[data-theme="light"] .ambient .band {
+  opacity: 0.22;
+}
+[data-theme="light"] .full .band {
+  opacity: 0.3;
+}
+[data-theme="light"] .stars {
+  display: none;
+}
