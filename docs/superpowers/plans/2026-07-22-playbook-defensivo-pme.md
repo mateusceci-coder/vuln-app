@@ -13,7 +13,7 @@
 - **Idioma:** português em todo o `playbook/`.
 - **NÃO corrigir** as vulnerabilidades do app — elas são o produto do lab.
 - **NÃO atualizar** as 4 deps fixadas: `express@4.19.1`, `jsonwebtoken@8.5.1`, `axios@1.7.3`, `multer@2.0.1`.
-- **NÃO implementar** o refactor SSRF-kb agora. A linha de SSRF referencia o **estado-alvo** `GET /api/admin/kb?ref=`; o código real hoje é `POST /api/admin/health-check` (`backend/src/routes/admin.js`).
+- **O refactor SSRF-kb já está implementado** (commit `56b41e6`, posterior a este plano): o código real hoje é `GET /api/admin/kb?ref=` (`backend/src/routes/admin.js`), não mais `/health-check`. O `exec`/`ping` do antigo health-check foi removido — não há mais command injection nessa rota, só SSRF via bypass do `baseURL` do axios (linha 20).
 - **NÃO adicionar** testes automatizados. Verificação é manual/CLI, como o resto do repo.
 - **Tudo vive em** `playbook/` (novo diretório na raiz).
 - **Ferramentas de verificação neste ambiente:** `docker` ✔ (usar imagens `aquasec/trivy` e `jasonish/suricata`), `xmllint` ✔ (`/opt/lampp/bin/xmllint`), `node`/`npm` ✔. `trivy` e `suricata` **não** estão instalados nativamente — usar via docker.
@@ -44,7 +44,7 @@ Conteúdo (porta de entrada):
 | Broken access control — `GET /api/usuarios` (`backend/src/routes/usuarios.js`) | falta de checagem de admin | checklist: autorização por papel no servidor | — (fix é shift-left) | T1078 |
 | Escalonamento de privilégio — `PATCH /api/usuarios/:id` (`backend/src/routes/usuarios.js`) | aceita alterar `papel` sem checagem | checklist: não deixar cliente alterar campo sensível | Wazuh: alteração de papel em log de app | T1078 |
 | Command injection — `GET /api/chamados/:id/pdf` (`backend/src/routes/chamados.js`) | `exec` com input do usuário | checklist: nunca passar input pra shell | Wazuh: `node` gerando `sh`/`whoami`/`curl` (auditd) | T1059 |
-| Command injection + SSRF — `POST /api/admin/health-check` (`backend/src/routes/admin.js:18,27`) → **estado-alvo** `GET /api/admin/kb?ref=` (bypass de baseURL, CVE-2024-39338) | `exec`/`axios.get` com input; deps sem revisão | checklist: allowlist de destino de saída; Trivy pega o CVE do axios | Suricata: saída pra `169.254.169.254` / host interno | T1190 |
+| SSRF — `GET /api/admin/kb?ref=` (`backend/src/routes/admin.js:20`), bypass de `baseURL` do axios (CVE-2024-39338) | `ref` repassado direto ao axios; dep sem revisão | checklist: allowlist de destino de saída; Trivy pega o CVE do axios | Suricata: saída pra `169.254.169.254` / host interno | T1190 |
 | DoS de upload — `POST /api/chamados/:id/anexos` (`backend/src/routes/anexos.js`) | multer sem `limits` | checklist: limitar tamanho/quantidade; Trivy pega CVE-2025-47944 | Wazuh: pico de disco/uso de recurso | T1499 |
 | Auth fraca — `POST /api/auth/login` (`backend/src/auth.js:5,9,29`) | MD5 sem salt, JWT sem `algorithms`, segredo `'aurora'`, sem rate-limit | checklist: argon2 + JWT `algorithms` + segredo via env + rate-limit; Trivy pega CVE do jsonwebtoken | Wazuh: brute force (N falhas/IP) | T1110 |
 | Backdoor slopsquattado — `express-audit-log` (`backend/vendor/express-audit-log/index.js`, wired em `backend/src/index.js:14,21`) — **já no código** | dep "sugerida por IA" sem revisão | checklist: revisar toda dep nova; **Trivy NÃO pega** (sem CVE) | Wazuh: FIM em `vendor/` + conexão de saída no startup; Suricata: beacon C2 pra `192.0.2.10/collect` | T1071 / T1195 |
@@ -97,8 +97,8 @@ Um item por vulnerabilidade, **cada um no formato**: `☐ Regra` → *Padrão in
 2. **Autorização por dono no servidor.** Inseguro: `GET /api/chamados/:id` retorna qualquer chamado (`backend/src/routes/chamados.js`). Correção: `WHERE solicitante_id = $usuario` (ou 403).
 3. **Autorização por papel no servidor.** Inseguro: `GET /api/usuarios` só exige JWT, não papel (`backend/src/routes/usuarios.js`). Correção: checar `req.usuario.papel === 'admin'` no servidor — nunca confiar no papel lido do token no front.
 4. **Cliente não altera campo sensível.** Inseguro: `PATCH /api/usuarios/:id` aceita `papel` (`backend/src/routes/usuarios.js`). Correção: allowlist de campos editáveis; `papel` só via rota admin.
-5. **Nunca passar input do usuário pra shell.** Inseguro: `exec('ping -c 1 ' + host)` (`backend/src/routes/admin.js:27`) e o `/pdf`. Correção: `execFile`/`spawn` com args array; validar contra allowlist.
-6. **Allowlist de destino em requisições de saída.** Inseguro: `axios.get(url)` com URL do usuário (`backend/src/routes/admin.js:18`); no estado-alvo `/kb`, o `baseURL` do axios ≤1.7.3 é burlável (CVE-2024-39338). Correção: allowlist de host + validar que a URL resolvida fica no destino esperado; atualizar axios.
+5. **Nunca passar input do usuário pra shell.** Inseguro: `exec(\`echo "Chamado: ${titulo}" > /tmp/${nome}.pdf ...\`)` (`backend/src/routes/chamados.js:104`). Correção: `execFile`/`spawn` com args array; validar contra allowlist.
+6. **Allowlist de destino em requisições de saída.** Inseguro: `kb.get(ref)` com `ref` do usuário repassado direto ao axios (`backend/src/routes/admin.js:20`); o `baseURL` do axios ≤1.7.3 é burlável por `ref` protocol-relative (CVE-2024-39338). Correção: allowlist de host + validar que a URL resolvida fica no destino esperado; atualizar axios.
 7. **Limitar upload.** Inseguro: multer sem `limits` (`backend/src/routes/anexos.js`). Correção: `multer({ limits: { fileSize, files } })` + atualizar multer.
 8. **Auth forte.** Inseguro: MD5 sem salt (`backend/src/auth.js:9`), `jwt.verify` sem `algorithms` (`backend/src/auth.js:29`), segredo `'aurora'` (`backend/src/auth.js:5`), sem rate-limit no login. Correção: argon2/bcrypt + salt; `jwt.verify(t, s, { algorithms: ['HS256'] })`; segredo forte só via env (falhar se ausente); rate-limit no `/login`.
 9. **Revisar toda dependência nova.** Inseguro: `express-audit-log` adicionado sem auditoria (`backend/vendor/express-audit-log/`) — tem beacon C2 + backdoor de auth. Correção: antes de adicionar, checar nome (typo/slopsquat), downloads, mantenedor, idade, e **ler o `index.js`**; `npm ci` + lockfile; a SCA (Task 3) **não** substitui essa revisão.
@@ -337,7 +337,7 @@ alert http any any -> $HOME_NET any (msg:"AURORA SQLi payload em /api/chamados (
 Conteúdo:
 - **Instalação:** copiar `aurora.rules` pra `/etc/suricata/rules/`; adicionar `- aurora.rules` em `rule-files:` no `suricata.yaml`; definir `HOME_NET` com a sub-rede da DMZ; `suricata-update` opcional; reiniciar.
 - **Nota de honestidade** na regra de SQLi: assinatura de payload é **burlável** (encoding, comentários inline) e ruidosa — serve de alerta best-effort; o controle real é a query parametrizada (checklist item 1).
-- **Runbook de validação (no lab):** beacon C2 → subir o backend e observar a tentativa de saída pra `192.0.2.10` no startup → esperar `sid:1000001`. SSRF metadata → (quando o `/kb` existir, ou via `/health-check` com `url` de metadata) → esperar `1000002`. SQLi → `curl` do payload `UNION SELECT` do README do repo → esperar `1000003`.
+- **Runbook de validação (no lab):** beacon C2 → subir o backend e observar a tentativa de saída pra `192.0.2.10` no startup → esperar `sid:1000001`. SSRF metadata → `GET /api/admin/kb?ref=//169.254.169.254/...` → esperar `1000002`. SQLi → `curl` do payload `UNION SELECT` do README do repo → esperar `1000003`.
 
 - [ ] **Step 3: Verificar — sintaxe das regras (via docker)**
 
@@ -365,11 +365,10 @@ git commit -m "playbook: regras Suricata (beacon C2, SSRF, SQLi) + runbooks"
 - Todos os ponteiros do guia/checklist resolvem pra arquivos reais (Tasks 1–2).
 
 **Pendente de validação no lab (pelo autor, via runbooks):**
-- Comportamento das regras Wazuh/Suricata contra os ataques reais.
-- Demo ao vivo do SSRF via `/kb` — aguarda o refactor SSRF-kb entrar no código (hoje é `/health-check`).
+- Comportamento das regras Wazuh/Suricata contra os ataques reais (o `/kb` já existe no código; o demo ao vivo do SSRF via `curl` fica pro runbook do Suricata, não bloqueia este plano).
 
 ## Self-review (feito na escrita)
 
 - **Cobertura do spec:** README+espinha (Task 1) ✓ · checklist (Task 2) ✓ · Trivy/CI+pre-commit (Task 3) ✓ · supply-chain (Task 4) ✓ · runtime overview+Wazuh (Task 5) ✓ · Suricata (Task 6) ✓. As 9 linhas da espinha estão todas na tabela da Task 1.
 - **Placeholders:** nenhum "TBD/TODO"; configs e regras têm conteúdo completo; docs de prosa têm outline concreto + ponteiros exatos (não "adicione conteúdo apropriado").
-- **Consistência de tipos/nomes:** ponteiros de arquivo conferidos contra o código real (`admin.js:18,27`, `auth.js:5,9,29`, `chamados.js:25`, `vendor/express-audit-log/index.js`, `index.js:14,21`); IDs de regra sem colisão (Wazuh 100101/100102/100110; Suricata 1000001–1000003).
+- **Consistência de tipos/nomes:** ponteiros de arquivo conferidos contra o código real (`admin.js:20`, `auth.js:5,9,29`, `chamados.js:25,104`, `vendor/express-audit-log/index.js`, `index.js:14,21`); IDs de regra sem colisão (Wazuh 100101/100102/100110; Suricata 1000001–1000003).
