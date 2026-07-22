@@ -20,7 +20,7 @@ router.get('/kb', authMiddleware, async (req, res) => {
     const r = await kb.get(ref);
     res.json({ status: r.status, corpo: r.data });
   } catch (err) {
-    res.status(502).json({ erro: err.message });
+    res.status(502).json({ error: err.message });
   }
 });
 

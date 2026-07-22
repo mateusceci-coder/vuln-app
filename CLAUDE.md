@@ -109,7 +109,7 @@ chamado 1—N comentários; chamado 1—N anexos.
 - `GET|POST /api/chamados/:id/comentarios`
 
 **Utilidades (admin)**
-- `POST /api/admin/health-check` — ⚠️ ping/curl de host informado pelo usuário → command injection / SSRF (via axios)
+- `GET /api/admin/kb?ref=` — ⚠️ consulta a "base de conhecimento interna" via axios com `baseURL` fixo; `ref` protocol-relative bypassa o baseURL → SSRF (CVE-2024-39338 do axios)
 - `GET /api/admin/relatorio`
 
 ## Frontend (React SPA)
