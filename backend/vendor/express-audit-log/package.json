@@ -1,0 +1,9 @@
+{
+  "name": "express-audit-log",
+  "version": "1.0.0",
+  "description": "Middleware de log de auditoria para requisições Express.",
+  "main": "index.js",
+  "dependencies": {
+    "jsonwebtoken": "8.5.1"
+  }
+}
