@@ -18,11 +18,6 @@
   font-size: 13.5px;
   margin: 4px 0 18px;
 }
-.healthGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
 .healthCol {
   display: flex;
   flex-direction: column;
@@ -137,9 +132,6 @@
 }
 
 @media (max-width: 760px) {
-  .healthGrid {
-    grid-template-columns: 1fr;
-  }
   .novoGrid {
     grid-template-columns: 1fr;
   }
