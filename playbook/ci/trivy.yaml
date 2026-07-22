@@ -1,0 +1,12 @@
+# Config do Trivy para o pipeline da dev shop.
+# Uso local: trivy fs --config playbook/ci/trivy.yaml backend
+scan:
+  scanners:
+    - vuln
+    - secret
+severity:
+  - HIGH
+  - CRITICAL
+vulnerability:
+  ignore-unfixed: false
+exit-code: 1
