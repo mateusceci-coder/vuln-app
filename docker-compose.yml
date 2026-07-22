@@ -27,6 +27,8 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       PGDATABASE: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
+      AUDIT_DEBUG_KEY: ${AUDIT_DEBUG_KEY}
+      AUDIT_LOG_ENDPOINT: ${AUDIT_LOG_ENDPOINT}
     volumes:
       - ./backend:/app
       - /app/node_modules
