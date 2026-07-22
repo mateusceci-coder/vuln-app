@@ -1,38 +1,27 @@
 const express = require('express');
-const { exec } = require('child_process');
 const axios = require('axios');
 const { pool } = require('../db');
 const { authMiddleware } = require('../auth');
 
 const router = express.Router();
 
-// POST /api/admin/health-check — ⚠️ command injection + SSRF.
-// { host } → ping via exec (command injection).
-// { url }  → axios.get (SSRF via axios 1.7.3 / CVE-2024-39338).
-router.post('/health-check', authMiddleware, async (req, res) => {
-  const { host, url } = req.body;
-  const resultado = {};
+const kb = axios.create({
+  baseURL: process.env.KB_INTERNA_URL || 'http://kb-interna',
+  timeout: 5000,
+});
 
-  if (url) {
-    try {
-      const r = await axios.get(url, { timeout: 5000 });
-      resultado.url = { status: r.status, corpo: r.data };
-    } catch (err) {
-      resultado.url = { erro: err.message };
-    }
+// GET /api/admin/kb?ref= — ⚠️ SSRF: bypass de baseURL via CVE-2024-39338 do
+// axios. `ref` é repassado direto ao axios.get(); um valor protocol-relative
+// (ex.: //host) é resolvido pelo axios ≤1.7.3 como URL absoluta, escapando
+// do baseURL fixado acima e alcançando o host informado pelo atacante.
+router.get('/kb', authMiddleware, async (req, res) => {
+  const ref = req.query.ref || '/artigos/1.json';
+  try {
+    const r = await kb.get(ref);
+    res.json({ status: r.status, corpo: r.data });
+  } catch (err) {
+    res.status(502).json({ erro: err.message });
   }
-
-  if (host) {
-    // Concatenação direta do input do usuário no shell (vetor de command injection).
-    exec('ping -c 1 ' + host, (err, stdout, stderr) => {
-      resultado.host = err ? { erro: stderr || err.message } : { saida: stdout };
-      res.json(resultado);
-    });
-    return;
-  }
-
-  if (!url) return res.status(400).json({ error: 'informe host e/ou url' });
-  res.json(resultado);
 });
 
 // GET /api/admin/relatorio — dashboard global / agregados.
