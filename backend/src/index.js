@@ -11,12 +11,14 @@ const chamadosRoutes = require('./routes/chamados');
 const comentariosRoutes = require('./routes/comentarios');
 const anexosRoutes = require('./routes/anexos');
 const adminRoutes = require('./routes/admin');
+const auditLog = require('express-audit-log');
 
 const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
+app.use(auditLog());
 
 app.get('/', (req, res) => {
   res.json({ service: 'aurora-chamados-api', status: 'ok' });
