@@ -42,9 +42,10 @@ Esqueleto inicial, ainda não implementa a especificação:
   implementada ainda.
 - `frontend/` — scaffold padrão Vite + React 19, sem telas da aplicação.
 - Dependências vulneráveis já **fixadas de propósito** em
-  `backend/package.json`: `jsonwebtoken@8.5.1`, `axios@1.7.3`,
-  `multer@2.0.1`. Ao adicionar/atualizar dependências no backend, não deixe o
-  gerenciador subir essas três além do range vulnerável.
+  `backend/package.json`: `express@4.19.1`, `jsonwebtoken@8.5.1`,
+  `axios@1.7.3`, `multer@2.0.1`. Ao adicionar/atualizar dependências no
+  backend, não deixe o gerenciador subir essas quatro além do range
+  vulnerável.
 
 ## Stack e topologia
 
@@ -60,7 +61,8 @@ Esqueleto inicial, ainda não implementa a especificação:
 | Pacote | Versão fixada | CVE | CWE | Rota associada |
 |---|---|---|---|---|
 | jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539/23540/23541 | CWE-287 (auth bypass) | login / verificação de JWT |
-| axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) | "verificar ambiente" (admin) |
+| express | 4.19.1 (< 4.19.2) | CVE-2024-29041 | CWE-601 (open redirect) | nenhuma — sem rota ativa, só achado de Trivy/SCA (decisão 2026-07-24, ver TODO.md) |
+| axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) | consulta à base de conhecimento interna (`GET /api/admin/kb?ref=`) |
 | multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) | upload de anexos |
 
 `jsonwebtoken` é a mais relevante para a tese: não especificar `algorithms`
