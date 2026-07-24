@@ -42,8 +42,8 @@ playbook referenciam estas linhas.
 | Auth fraca — `POST /api/auth/login` (`backend/src/auth.js:5,9,29`) | MD5 sem salt, JWT sem `algorithms`, segredo `'aurora'`, sem rate-limit | checklist: argon2 + JWT `algorithms` + segredo via env + rate-limit; Trivy pega CVE do jsonwebtoken | Wazuh: brute force (N falhas/IP) | T1110 |
 | Backdoor slopsquattado — `express-audit-log` (`backend/vendor/express-audit-log/index.js`, wired em `backend/src/index.js:14,21`) — **já no código** | dep "sugerida por IA" sem revisão | checklist: revisar toda dep nova; **Trivy NÃO pega** (sem CVE) | Wazuh: FIM em `vendor/` + conexão de saída no startup; Suricata: beacon C2 pra `192.0.2.10/collect` | T1071 / T1195 |
 
-As 4 dependências com CVE conhecido (`jsonwebtoken`, `express`, `axios`,
-`multer`) são a coluna "controle shift-left via Trivy": SCA encontra o CVE no
+As 3 dependências com CVE conhecido (`jsonwebtoken`, `axios`, `multer`) são a
+coluna "controle shift-left via Trivy": SCA encontra o CVE no
 `package-lock.json` antes do deploy. A dependência maliciosa
 (`express-audit-log`) é o contraste proposital — sem CVE publicado, só a
 detecção em runtime (FIM, beacon de rede) pega.

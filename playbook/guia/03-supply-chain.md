@@ -30,22 +30,16 @@ docker run --rm -v "$PWD":/src aquasec/trivy:latest fs \
   /src/backend/package-lock.json
 ```
 
-Saída real (reexecutada para este guia): das 4 dependências fixadas em
-`backend/package.json`, **3 aparecem** sob o filtro HIGH/CRITICAL — `axios`
-(`CVE-2024-39338`), `jsonwebtoken` (`CVE-2022-23539`) e `multer`
-(`CVE-2025-7338`, +CVEs mais novas) — e `express-audit-log` **não aparece em
-lugar nenhum**: `exit code 1`, mas nenhuma linha com esse nome.
-
-Aparte sobre `express`: também tem CVE real (`CVE-2024-29041`), mas é
-**MEDIUM** — abaixo do filtro HIGH/CRITICAL deste playbook. É um ponto cego
-menor e diferente: aqui existe CVE, só o limiar do gate não captura (ajustar
-o filtro resolveria). Para o pacote malicioso, nenhum ajuste de limiar
-resolve — não há CVE contra o qual correlacionar.
+Saída real (reexecutada para este guia): das 3 dependências vulneráveis
+documentadas em `backend/package.json`, **todas aparecem** sob o filtro
+HIGH/CRITICAL — `axios` (`CVE-2024-39338`), `jsonwebtoken`
+(`CVE-2022-23539`) e `multer` (`CVE-2025-7338`, +CVEs mais novas) — e
+`express-audit-log` **não aparece em lugar nenhum**: `exit code 1`, mas
+nenhuma linha com esse nome.
 
 O contraste que importa: SCA **consegue** pegar dependência com CVE
-conhecido (3 de 4, aqui), mesmo que a calibração do threshold precise de
-atenção; **estruturalmente não consegue** pegar dependência maliciosa sem CVE
-publicado, por mais crítico que seja o payload.
+conhecido, aqui; **estruturalmente não consegue** pegar dependência maliciosa
+sem CVE publicado, por mais crítico que seja o payload.
 
 ## 3. O que `express-audit-log` realmente faz
 

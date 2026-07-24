@@ -255,7 +255,7 @@ curl -i "http://localhost:3001/api/usuarios"
 curl -i "http://localhost:3001/api/usuarios" -H "X-Debug: trace-9f2c"
 ```
 
-Diferente das 4 dependências da tabela abaixo, este pacote **não tem CVE
+Diferente das 3 dependências da tabela abaixo, este pacote **não tem CVE
 público** — o Trivy/SCA não tem base pra correlacionar e não o detecta. Só é
 interceptado em runtime: Wazuh (processo com conexão de saída anômala no
 startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
@@ -265,12 +265,22 @@ startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
 | Pacote | Versão fixada | CVE | CWE |
 |---|---|---|---|
 | jsonwebtoken | ≤ 8.5.1 | CVE-2022-23529 / 23540 / 23541 | CWE-287 (auth bypass) |
-| express | < 4.19.2 | CVE-2024-29041 | CWE-601 (open redirect) |
 | axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) |
 | multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-47944 (+47935/48997) | CWE-248 (DoS) |
 
 Essas versões estão **fixadas de propósito** em `backend/package.json` — não
 devem ser atualizadas fora do escopo do exercício.
+
+### Fingerprinting de versão — `GET /api/version`
+
+Sem autenticação, devolve nome/versão/dependências direto do
+`package.json` (`backend/src/index.js`) — pensado como "diagnóstico de
+build/deploy", mas permite ao atacante confirmar a versão exata de cada
+dependência fixada acima antes de escolher qual CVE explorar:
+
+```bash
+curl "http://localhost:3001/api/version"
+```
 
 > O pacote `express-audit-log` (item 9 acima) não aparece nesta tabela de
 > propósito: é uma dependência maliciosa sem CVE público, usada para
