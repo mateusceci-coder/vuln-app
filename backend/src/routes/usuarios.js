@@ -4,11 +4,16 @@ const { hashSenha, authMiddleware } = require('../auth');
 
 const router = express.Router();
 
-// Todas as rotas exigem um token válido, mas NÃO checam papel (admin) no servidor.
+// Demais rotas exigem um token válido, mas NÃO checam papel (admin) no servidor.
 
-// GET /api/usuarios — ⚠️ sem checagem de admin (broken access control).
-// Qualquer usuário autenticado lista todos — inclui telefone/cpf/email (dados pessoais).
+// GET /api/usuarios — checagem de admin baseada no papel do JWT decodificado.
+// Como authMiddleware (auth.js) não fixa `algorithms` em jwt.verify() e usa
+// segredo fraco, um token forjado/alterado com papel "admin" passa por aqui
+// (escalonamento de privilégio via CVE-2022-23539/23540/23541 do jsonwebtoken).
 router.get('/', authMiddleware, async (req, res) => {
+  if (req.usuario.papel !== 'admin') {
+    return res.status(403).json({ error: 'acesso restrito a administradores' });
+  }
   const { rows } = await pool.query(
     'SELECT id, nome, email, papel, telefone, cpf, empresa, criado_em FROM usuarios ORDER BY id'
   );
