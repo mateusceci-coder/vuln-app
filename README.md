@@ -263,6 +263,26 @@ curl "http://localhost:3001/api/version"
 > demonstrar o limite da SCA — o Trivy detecta CVE conhecido, não um
 > backdoor novo sem advisory público.
 
+### Painel interno esquecido — credenciais compartilhadas pela equipe
+
+Página `/interno-equipe` (fora do menu e do `ProtectedRoute`) e a rota
+`GET /api/interno/equipe` (`backend/src/routes/interno.js`, sem
+`authMiddleware`) expõem uma "planilha" de credenciais de sistemas internos
+da Aurora Dev — VPN, painel de hospedagem, backup e Postgres de produção —
+deixada em produção depois do deploy em homologação. O caminho é descoberto
+via `robots.txt`, que tenta esconder a página dos buscadores e acaba
+revelando-a no recon:
+
+```bash
+curl "http://localhost:5173/robots.txt"          # Disallow: /interno-equipe
+curl "http://localhost:3001/api/interno/equipe"  # credenciais em JSON, sem token
+```
+
+Diferente dos itens 1–8 (padrões de código que uma IA emite sem revisão),
+este é um terceiro tipo de falha: um artefato interno esquecido pela própria
+equipe, sem checagem de acesso nenhuma (CWE-912) — achado clássico de pentest
+real, independente do IDOR de `chamados`.
+
 ## Aviso final
 
 Todos os exemplos acima existem para permitir que ferramentas de detecção

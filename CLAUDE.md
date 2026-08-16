@@ -110,6 +110,20 @@ chamado 1—N comentários; chamado 1—N anexos.
 **Utilidades (admin)**
 - `GET /api/admin/relatorio`
 
+## Vulnerabilidade adicional: painel interno esquecido
+
+Fora do mapa de rotas da aplicação — compartilhamento de credenciais pela
+própria equipe da Aurora Dev, não por um chamado:
+
+- `GET /api/interno/equipe` — ⚠️ sem `authMiddleware`, devolve em JSON uma
+  "planilha" de credenciais de sistemas internos (VPN, painel de hospedagem,
+  backup, Postgres de produção) esquecida em produção após o deploy em
+  homologação.
+- Frontend: página `/interno-equipe`, sem `ProtectedRoute` e não linkada em
+  nenhum menu.
+- Pista de descoberta: `frontend/public/robots.txt` desautoriza o caminho
+  (`Disallow: /interno-equipe`), revelando-o durante recon.
+
 ## Frontend (React SPA)
 
 Login (sem MFA) · Dashboard (métricas + busca, vetor de SQLi) · Lista de

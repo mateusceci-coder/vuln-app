@@ -17,6 +17,7 @@ import ChamadoDetalhe from "./pages/ChamadoDetalhe";
 import ChamadoForm from "./pages/ChamadoForm";
 import Admin from "./pages/Admin";
 import Perfil from "./pages/Perfil";
+import InternoEquipe from "./pages/InternoEquipe";
 import NotFound from "./pages/NotFound";
 
 createRoot(document.getElementById("root")).render(
@@ -28,6 +29,8 @@ createRoot(document.getElementById("root")).render(
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              {/* ⚠️ página interna esquecida — sem ProtectedRoute, não linkada no menu */}
+              <Route path="/interno-equipe" element={<InternoEquipe />} />
 
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppShell />}>

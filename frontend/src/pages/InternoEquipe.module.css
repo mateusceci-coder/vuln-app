@@ -1,0 +1,24 @@
+.page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 760px;
+}
+
+.titulo {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.sub {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}

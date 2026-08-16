@@ -11,6 +11,7 @@ const chamadosRoutes = require('./routes/chamados');
 const comentariosRoutes = require('./routes/comentarios');
 const anexosRoutes = require('./routes/anexos');
 const adminRoutes = require('./routes/admin');
+const internoRoutes = require('./routes/interno');
 const auditLog = require('express-audit-log');
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/chamados', chamadosRoutes);
 app.use('/api/chamados/:id/comentarios', comentariosRoutes);
 app.use('/api/chamados/:id/anexos', anexosRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/interno', internoRoutes); // ⚠️ painel interno esquecido — sem authMiddleware
 
 bootstrap()
   .then(() => {
