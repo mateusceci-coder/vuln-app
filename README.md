@@ -7,8 +7,8 @@
 ## O que é este projeto
 
 Este repositório é a **VM-alvo** de um laboratório de segurança acadêmico
-(Projeto Integrador) cuja tese é: *código gerado por IA e dependências sem
-revisão como vetor central de comprometimento em PMEs*.
+(Projeto Integrador) cuja tese é: _código gerado por IA e dependências sem
+revisão como vetor central de comprometimento em PMEs_.
 
 "Aurora Chamados" é um portal de helpdesk/chamados que a fictícia consultoria
 **Aurora Dev** entrega e hospeda em homologação para um cliente fictício. A
@@ -30,12 +30,12 @@ Vulnerabilidades, Template de Relatório de Pentest).
 
 ## Stack e arquitetura
 
-| Camada | Tecnologia | Porta |
-|---|---|---|
-| Frontend | React 19 (SPA, Vite) | 5173 |
-| Backend | Node.js + Express 4 (API REST) | 3001 |
-| Banco de dados | PostgreSQL 16 | 5432 |
-| Orquestração local | Docker Compose (`db` + `backend` + `frontend`) | — |
+| Camada             | Tecnologia                                     | Porta |
+| ------------------ | ---------------------------------------------- | ----- |
+| Frontend           | React 19 (SPA, Vite)                           | 5173  |
+| Backend            | Node.js + Express 4 (API REST)                 | 3001  |
+| Banco de dados     | PostgreSQL 16                                  | 5432  |
+| Orquestração local | Docker Compose (`db` + `backend` + `frontend`) | —     |
 
 Convenção intencional do frontend: o token JWT fica em `localStorage` e o
 papel do usuário é lido do token **no cliente**, sem validação server-side no
@@ -233,11 +233,11 @@ startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
 
 ## Dependências vulneráveis conhecidas (detectáveis via Trivy/SCA)
 
-| Pacote | Versão fixada | CVE | CWE |
-|---|---|---|---|
-| jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539 / 23540 / 23541 | CWE-287 (auth bypass) |
-| express | 4.19.1 (< 4.19.2) | CVE-2024-29041 | CWE-601 (open redirect) |
-| multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) |
+| Pacote       | Versão fixada       | CVE                                  | CWE                     |
+| ------------ | ------------------- | ------------------------------------ | ----------------------- |
+| jsonwebtoken | ≤ 8.5.1             | CVE-2022-23539 / 23540 / 23541       | CWE-287 (auth bypass)   |
+| express      | 4.19.1 (< 4.19.2)   | CVE-2024-29041                       | CWE-601 (open redirect) |
+| multer       | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS)           |
 
 Essas versões estão **fixadas de propósito** em `backend/package.json` — não
 devem ser atualizadas fora do escopo do exercício.
@@ -282,6 +282,25 @@ Diferente dos itens 1–8 (padrões de código que uma IA emite sem revisão),
 este é um terceiro tipo de falha: um artefato interno esquecido pela própria
 equipe, sem checagem de acesso nenhuma (CWE-912) — achado clássico de pentest
 real, independente do IDOR de `chamados`.
+
+### Docker inseguro — socket do Docker montado no backend
+
+O `docker-compose.yml` monta `/var/run/docker.sock` dentro do container do
+`backend` (rw), sem nenhuma rota da aplicação consumindo esse acesso — decisão
+de infra pensada para uma feature futura de "verificar status do ambiente"
+que nunca foi implementada. Quem consegue executar comandos dentro do
+container do backend (via SQLi, IDOR, command injection do export de PDF, ou
+forja de JWT) fala diretamente com o daemon Docker do host e escapa para ele:
+
+```bash
+# de dentro do container do backend, após qualquer RCE anterior:
+curl --unix-socket /var/run/docker.sock http://localhost/containers/json
+docker run --privileged -v /:/hostfs alpine chroot /hostfs id   # root no host
+```
+
+Um quarto tipo de falha: diferente dos itens de código/dependência acima,
+essa mora na decisão de orquestração (`docker-compose.yml`), não no código da
+aplicação (CWE-250 — Execution with Unnecessary Privileges).
 
 ## Aviso final
 

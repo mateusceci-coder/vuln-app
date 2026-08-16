@@ -57,11 +57,11 @@ Esqueleto inicial, ainda não implementa a especificação:
 
 ## Dependências vulneráveis (não atualizar sem discutir)
 
-| Pacote | Versão fixada | CVE | CWE | Rota associada |
-|---|---|---|---|---|
-| jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539/23540/23541 | CWE-287 (auth bypass) | login / verificação de JWT |
-| express | 4.19.1 (< 4.19.2) | CVE-2024-29041 | CWE-601 (open redirect) | nenhuma — sem rota ativa, só achado de Trivy/SCA (decisão 2026-07-24, ver TODO.md) |
-| multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) | upload de anexos |
+| Pacote       | Versão fixada       | CVE                                  | CWE                     | Rota associada                                                                     |
+| ------------ | ------------------- | ------------------------------------ | ----------------------- | ---------------------------------------------------------------------------------- |
+| jsonwebtoken | ≤ 8.5.1             | CVE-2022-23539/23540/23541           | CWE-287 (auth bypass)   | login / verificação de JWT                                                         |
+| express      | 4.19.1 (< 4.19.2)   | CVE-2024-29041                       | CWE-601 (open redirect) | nenhuma — sem rota ativa, só achado de Trivy/SCA (decisão 2026-07-24, ver TODO.md) |
+| multer       | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS)           | upload de anexos                                                                   |
 
 `jsonwebtoken` é a mais relevante para a tese: não especificar `algorithms`
 em `jwt.verify()` é um erro típico de código gerado por IA sem revisão.
@@ -89,25 +89,30 @@ chamado 1—N comentários; chamado 1—N anexos.
 ⚠️ marca onde a vulnerabilidade deve viver — implemente a versão insegura, não a corrigida.
 
 **Auth**
+
 - `POST /api/auth/register`
 - `POST /api/auth/login` — ⚠️ sem rate-limit, hash fraco (MD5/SHA1), JWT com segredo fraco
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
 
 **Usuários**
+
 - `GET /api/usuarios` — ⚠️ sem checagem de admin no servidor (broken access control)
 - `GET|POST|PATCH|DELETE /api/usuarios/:id` — ⚠️ `PATCH` de papel sem checagem → escalonamento de privilégio
 
 **Chamados**
+
 - `GET /api/chamados?busca=` — ⚠️ query por concatenação de string → SQL injection
 - `GET /api/chamados/:id` — ⚠️ sem checagem de dono → IDOR (vaza dados pessoais)
 - `POST|PATCH|DELETE /api/chamados/:id`
 - `GET /api/chamados/:id/pdf` — ⚠️ export chama binário externo com input do usuário → command injection
 
 **Comentários**
+
 - `GET|POST /api/chamados/:id/comentarios`
 
 **Utilidades (admin)**
+
 - `GET /api/admin/relatorio`
 
 ## Vulnerabilidade adicional: painel interno esquecido
@@ -123,6 +128,16 @@ própria equipe da Aurora Dev, não por um chamado:
   nenhum menu.
 - Pista de descoberta: `frontend/public/robots.txt` desautoriza o caminho
   (`Disallow: /interno-equipe`), revelando-o durante recon.
+
+## Vulnerabilidade adicional: docker.sock montado no backend
+
+Fora do mapa de rotas — falha de configuração de infraestrutura
+(`docker-compose.yml`), não de código de rota:
+
+- O serviço `backend` monta `/var/run/docker.sock:/var/run/docker.sock` (rw).
+  Nenhuma rota da aplicação usa esse acesso — é privilégio concedido sem
+  necessidade (CWE-250), pensado para uma feature futura de "verificar status
+  do ambiente" que nunca foi implementada.
 
 ## Frontend (React SPA)
 
