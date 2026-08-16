@@ -35,7 +35,7 @@ app.get('/api/health', async (req, res) => {
 
 // GET /api/version — ⚠️ expõe nome/versão/dependências direto do package.json,
 // sem autenticação, para diagnóstico de build/deploy. Permite fingerprinting
-// das versões vulneráveis fixadas (jsonwebtoken, axios, multer).
+// das versões vulneráveis fixadas (jsonwebtoken, multer).
 app.get('/api/version', (req, res) => {
   const { name, version, dependencies } = require('../package.json');
   res.json({ name, version, dependencies });

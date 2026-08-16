@@ -11,7 +11,6 @@
   "dependencies": {
     "express": "4.19.1",
     "jsonwebtoken": "8.5.1",
-    "axios": "1.7.3",
     "multer": "2.0.1",
     "pg": "8.13.1",
     "cors": "2.8.5",

@@ -29,22 +29,17 @@ app vulnerável, a correção e o ponteiro no código.
    *Correção:* `execFile`/`spawn` com args array; validar contra allowlist.
    *Onde no app:* `backend/src/routes/chamados.js:104`.
 
-6. ☐ **Allowlist de destino em requisições de saída.**
-   *Padrão inseguro:* `kb.get(ref)` com `ref` do usuário repassado direto ao axios (`backend/src/routes/admin.js:20`); o `baseURL` do axios ≤1.7.3 é burlável por `ref` protocol-relative (CVE-2024-39338).
-   *Correção:* allowlist de host + validar que a URL resolvida fica no destino esperado; atualizar axios.
-   *Onde no app:* `backend/src/routes/admin.js:20`.
-
-7. ☐ **Limitar upload.**
+6. ☐ **Limitar upload.**
    *Padrão inseguro:* multer sem `limits` (`backend/src/routes/anexos.js`).
    *Correção:* `multer({ limits: { fileSize, files } })` + atualizar multer.
    *Onde no app:* `backend/src/routes/anexos.js`.
 
-8. ☐ **Auth forte.**
+7. ☐ **Auth forte.**
    *Padrão inseguro:* MD5 sem salt (`backend/src/auth.js:9`), `jwt.verify` sem `algorithms` (`backend/src/auth.js:29`), segredo `'aurora'` (`backend/src/auth.js:5`), sem rate-limit no login.
    *Correção:* argon2/bcrypt + salt; `jwt.verify(t, s, { algorithms: ['HS256'] })`; segredo forte só via env (falhar se ausente); rate-limit no `/login`.
    *Onde no app:* `backend/src/auth.js:5`, `backend/src/auth.js:9`, `backend/src/auth.js:29`.
 
-9. ☐ **Revisar toda dependência nova.**
+8. ☐ **Revisar toda dependência nova.**
    *Padrão inseguro:* `express-audit-log` adicionado sem auditoria (`backend/vendor/express-audit-log/`) — tem beacon C2 + backdoor de auth.
    *Correção:* antes de adicionar, checar nome (typo/slopsquat), downloads, mantenedor, idade, e **ler o `index.js`**; `npm ci` + lockfile; a SCA (Task 3) **não** substitui essa revisão.
    *Onde no app:* `backend/vendor/express-audit-log/`.

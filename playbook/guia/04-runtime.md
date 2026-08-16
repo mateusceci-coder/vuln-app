@@ -23,10 +23,7 @@ Em ordem de prioridade neste laboratório:
 2. **Command injection / RCE** — `GET /api/chamados/:id/pdf?nome=`
    passa input do usuário pro shell. Se o shift-left falhar, o processo
    `node` gerando `sh`/`whoami`/`curl` é o sinal.
-3. **SSRF pra rede interna/metadata** — `GET /api/admin/kb?ref=` com bypass
-   de `baseURL` do axios (CVE-2024-39338). Runtime pega a saída de rede pro
-   destino interno que não deveria ser alcançado.
-4. **Brute force de login** — `POST /api/auth/login` sem rate-limit. Runtime
+3. **Brute force de login** — `POST /api/auth/login` sem rate-limit. Runtime
    conta falhas por IP; não impede a primeira tentativa, mas sinaliza a
    varredura.
 

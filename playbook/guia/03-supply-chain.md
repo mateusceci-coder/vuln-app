@@ -30,12 +30,11 @@ docker run --rm -v "$PWD":/src aquasec/trivy:latest fs \
   /src/backend/package-lock.json
 ```
 
-Saída real (reexecutada para este guia): das 3 dependências vulneráveis
-documentadas em `backend/package.json`, **todas aparecem** sob o filtro
-HIGH/CRITICAL — `axios` (`CVE-2024-39338`), `jsonwebtoken`
-(`CVE-2022-23539`) e `multer` (`CVE-2025-7338`, +CVEs mais novas) — e
-`express-audit-log` **não aparece em lugar nenhum**: `exit code 1`, mas
-nenhuma linha com esse nome.
+Saída real (reexecutada para este guia): das 2 dependências vulneráveis
+documentadas em `backend/package.json`, **ambas aparecem** sob o filtro
+HIGH/CRITICAL — `jsonwebtoken` (`CVE-2022-23539`) e `multer`
+(`CVE-2025-7338`, +CVEs mais novas) — e `express-audit-log` **não aparece em
+lugar nenhum**: `exit code 1`, mas nenhuma linha com esse nome.
 
 O contraste que importa: SCA **consegue** pegar dependência com CVE
 conhecido, aqui; **estruturalmente não consegue** pegar dependência maliciosa
@@ -63,7 +62,7 @@ header `X-Debug` chegando de fora.
 
 ## 4. Guardas práticas da dev shop
 
-- **Revisar toda dependência nova** (checklist item 9,
+- **Revisar toda dependência nova** (checklist item 8,
   `playbook/guia/02-checklist.md`): nome, downloads, mantenedor, idade — e
   **ler o `index.js`** quando o pacote for pequeno o bastante.
 - **Registry interno ou allowlist** de nomes aprovados, cortando o vetor

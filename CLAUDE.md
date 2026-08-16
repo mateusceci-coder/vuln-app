@@ -43,9 +43,8 @@ Esqueleto inicial, ainda não implementa a especificação:
 - `frontend/` — scaffold padrão Vite + React 19, sem telas da aplicação.
 - Dependências vulneráveis já **fixadas de propósito** em
   `backend/package.json`: `express@4.19.1`, `jsonwebtoken@8.5.1`,
-  `axios@1.7.3`, `multer@2.0.1`. Ao adicionar/atualizar dependências no
-  backend, não deixe o gerenciador subir essas quatro além do range
-  vulnerável.
+  `multer@2.0.1`. Ao adicionar/atualizar dependências no backend, não deixe
+  o gerenciador subir essas três além do range vulnerável.
 
 ## Stack e topologia
 
@@ -62,7 +61,6 @@ Esqueleto inicial, ainda não implementa a especificação:
 |---|---|---|---|---|
 | jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539/23540/23541 | CWE-287 (auth bypass) | login / verificação de JWT |
 | express | 4.19.1 (< 4.19.2) | CVE-2024-29041 | CWE-601 (open redirect) | nenhuma — sem rota ativa, só achado de Trivy/SCA (decisão 2026-07-24, ver TODO.md) |
-| axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) | consulta à base de conhecimento interna (`GET /api/admin/kb?ref=`) |
 | multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) | upload de anexos |
 
 `jsonwebtoken` é a mais relevante para a tese: não especificar `algorithms`
@@ -83,7 +81,7 @@ chamado 1—N comentários; chamado 1—N anexos.
 
 - **Cliente** (auto-cadastro): abrir chamado, acompanhar seus chamados, comentar, buscar nos próprios chamados, editar perfil.
 - **Agente**: fila de chamados atribuídos, responder, mudar status/prioridade, atribuir, comentário interno (não visível ao cliente).
-- **Admin**: gestão de usuários (listar/criar/alterar papel/remover), dashboard global, exportar relatório/PDF, "verificar status do ambiente".
+- **Admin**: gestão de usuários (listar/criar/alterar papel/remover), dashboard global, exportar relatório/PDF.
 - Login/logout sem MFA para todos os papéis.
 
 ## Mapa de rotas planejado (API Express)
@@ -110,7 +108,6 @@ chamado 1—N comentários; chamado 1—N anexos.
 - `GET|POST /api/chamados/:id/comentarios`
 
 **Utilidades (admin)**
-- `GET /api/admin/kb?ref=` — ⚠️ consulta a "base de conhecimento interna" via axios com `baseURL` fixo; `ref` protocol-relative bypassa o baseURL → SSRF (CVE-2024-39338 do axios)
 - `GET /api/admin/relatorio`
 
 ## Frontend (React SPA)
@@ -118,7 +115,7 @@ chamado 1—N comentários; chamado 1—N anexos.
 Login (sem MFA) · Dashboard (métricas + busca, vetor de SQLi) · Lista de
 chamados (tabela filtrável/paginada) · Detalhe do chamado (vetor de IDOR) ·
 Novo/editar chamado · Área admin (tabela de usuários + edição de papel;
-botões "Exportar PDF" e "Verificar ambiente") · Perfil.
+botão "Exportar PDF") · Perfil.
 
 Convenção intencional: token JWT em `localStorage`, papel do usuário lido do
 token no cliente (confiança indevida no front-end) — mantenha esse padrão ao

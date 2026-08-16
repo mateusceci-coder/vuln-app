@@ -29,20 +29,12 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       AUDIT_DEBUG_KEY: ${AUDIT_DEBUG_KEY}
       AUDIT_LOG_ENDPOINT: ${AUDIT_LOG_ENDPOINT}
-      KB_INTERNA_URL: ${KB_INTERNA_URL}
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
-      kb-interna:
-        condition: service_started
-
-  kb-interna:
-    image: nginx:alpine
-    volumes:
-      - ./kb-interna/artigos:/usr/share/nginx/html/artigos:ro
 
   frontend:
     build: ./frontend

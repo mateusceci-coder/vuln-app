@@ -1,11 +1,11 @@
 # Suricata — regras custom para o lab Aurora Chamados
 
-Regras em `aurora.rules` (SIDs 1000001, 1000002, 1000003 — range local
-1000000+). Este README cobre instalação, uma nota de honestidade sobre os
-limites da regra de SQLi, e um runbook de validação para rodar no lab
-completo (OPNsense + Kali + host Debian + app na DMZ) — **este repositório
-sozinho não roda um Suricata monitorando tráfego de verdade**, então nenhuma
-das três regras foi validada contra tráfego real aqui; o que foi validado
+Regras em `aurora.rules` (SIDs 1000001, 1000003 — range local 1000000+).
+Este README cobre instalação, uma nota de honestidade sobre os limites da
+regra de SQLi, e um runbook de validação para rodar no lab completo
+(OPNsense + Kali + host Debian + app na DMZ) — **este repositório sozinho
+não roda um Suricata monitorando tráfego de verdade**, então nenhuma das
+duas regras foi validada contra tráfego real aqui; o que foi validado
 neste repo é só a sintaxe (ver seção "Verificação de sintaxe" abaixo). O que
 segue depois disso é a especificação de como validar o comportamento no lab.
 
@@ -29,7 +29,7 @@ regras custom aqui). Depois, reiniciar:
 systemctl restart suricata
 ```
 
-Confirme que as três regras carregaram sem erro:
+Confirme que as duas regras carregaram sem erro:
 
 ```bash
 tail -f /var/log/suricata/suricata.log | grep -i rule
@@ -53,11 +53,9 @@ de payload **best-effort e ruidosa**, não uma proteção:
   alerta adicional em profundidade (defense-in-depth) para tentativas
   grosseiras — nunca para substituir a correção na aplicação.
 
-As regras `1000001` (beacon C2) e `1000002` (SSRF para metadata) são
-assinaturas de destino/host mais específicas e não sofrem do mesmo problema
-de bypass por encoding — mas também dependem de o atacante não trocar o
-IP/host alvo (ex.: cache de metadata via outro proxy) para continuarem
-válidas.
+A regra `1000001` (beacon C2) é uma assinatura de destino/host mais
+específica e não sofre do mesmo problema de bypass por encoding — mas também
+depende de o atacante não trocar o IP/host alvo para continuar válida.
 
 ## Runbook de validação (no lab)
 
@@ -75,25 +73,6 @@ Rodar cada cenário no lab completo e conferir o alerta esperado no
    (slopsquat)") assim que o Suricata vê o `GET /collect` com
    `Host: 192.0.2.10`.
 
-### SSRF para o endpoint de metadata (sid:1000002)
-
-O caminho de ataque atual é `GET /api/admin/kb?ref=`, **não** uma rota de
-`/health-check`. A rota consulta uma "base de conhecimento interna" via
-`axios.create({ baseURL: 'http://kb-interna' })` e repassa `ref` direto pro
-`axios.get(ref)` (`backend/src/routes/admin.js`). Um `ref` protocol-relative
-ou absoluto explora o bypass de `baseURL` do axios ≤1.7.3 (CVE-2024-39338),
-escapando do host fixado.
-
-```bash
-curl --get "http://localhost:3001/api/admin/kb" \
-  --data-urlencode "ref=//169.254.169.254/latest/meta-data/" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-Esperado: alerta `sid:1000002` ("AURORA SSRF para metadata
-169.254.169.254") quando essa requisição sai do backend com
-`Host: 169.254.169.254`.
-
 ### SQLi em `/api/chamados` (sid:1000003)
 
 Usando o payload de exfiltração via `UNION SELECT` do README do repo
@@ -110,7 +89,7 @@ Esperado: alerta `sid:1000003` ("AURORA SQLi payload em /api/chamados
 com comentário inline (`UNION/**/SELECT`) ou encoding passa batido por esta
 regra sem deixar de explorar a vulnerabilidade real.
 
-Nenhum destes três resultados foi observado nesta revisão — este README
+Nenhum destes dois resultados foi observado nesta revisão — este README
 descreve o que rodar e o que esperar no lab, não uma execução já feita.
 
 ## Verificação de sintaxe (feita neste repo)
@@ -120,6 +99,6 @@ docker run --rm -v "$PWD/playbook/deteccao/suricata":/r jasonish/suricata:latest
   suricata -T -S /r/aurora.rules -l /tmp
 ```
 
-Confirma que o Suricata consegue carregar e parsear as 3 regras sem erro —
+Confirma que o Suricata consegue carregar e parsear as 2 regras sem erro —
 não valida comportamento contra tráfego real (isso é o runbook acima, no
 lab).

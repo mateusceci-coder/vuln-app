@@ -8,64 +8,6 @@
   color: var(--text-muted);
 }
 
-/* health check */
-.health {
-  padding: 22px;
-  margin-bottom: 18px;
-}
-.healthSub {
-  color: var(--text-muted);
-  font-size: 13.5px;
-  margin: 4px 0 18px;
-}
-.healthCol {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 0;
-}
-.healthLabel {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--text-muted);
-}
-.healthRow {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-.healthRow > div {
-  flex: 1;
-}
-
-.terminal {
-  padding: 12px 14px;
-  background: #05070b;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: #9df5e0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-x: auto;
-  max-height: 260px;
-}
-.terminalHead {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-  margin-bottom: 8px;
-}
-
 /* users */
 .usersCard {
   overflow: hidden;

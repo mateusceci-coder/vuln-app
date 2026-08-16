@@ -1,4 +1,0 @@
-{
-  "titulo": "Reiniciar o TEF após falha na maquininha",
-  "corpo": "Desligue a maquininha, aguarde 10 segundos, religue e aguarde o pareamento com o PDV antes de tentar uma nova transação."
-}

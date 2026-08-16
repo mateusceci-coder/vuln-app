@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { UserPlus, Trash2, Terminal, Globe } from "lucide-react";
+import { UserPlus, Trash2 } from "lucide-react";
 import {
   PageHeader, Card, Table, Button, Input, Select, Avatar, Modal, Loading, EmptyState, useToast,
 } from "../components/ui";
@@ -46,15 +46,13 @@ export default function Admin() {
       <PageHeader
         eyebrow="Administração"
         title="Painel administrativo"
-        subtitle="Gestão de usuários e consulta à base de conhecimento."
+        subtitle="Gestão de usuários."
         actions={
           <Button variant="primary" onClick={() => setNovoAberto(true)}>
             <UserPlus size={16} /> Novo usuário
           </Button>
         }
       />
-
-      <ConsultaKb />
 
       <Card className={styles.usersCard} padded={false}>
         <div className={styles.usersHead}>
@@ -127,56 +125,6 @@ export default function Admin() {
         Remover <strong>{excluir?.nome}</strong> ({excluir?.email})? Essa ação não pode ser desfeita.
       </Modal>
     </>
-  );
-}
-
-function ConsultaKb() {
-  const [ref, setRef] = useState("/artigos/1.json");
-  const [saida, setSaida] = useState(null);
-  const [rodando, setRodando] = useState(false);
-
-  // ⚠️ SSRF: `ref` é repassado ao axios com baseURL fixo no backend; um
-  // valor protocol-relative (ex.: //169.254.169.254/...) bypassa o baseURL
-  // (CVE-2024-39338 do axios 1.7.3 fixado no projeto).
-  async function consultar(e) {
-    e.preventDefault();
-    setRodando(true);
-    try {
-      const r = await apiGet(`/admin/kb?ref=${encodeURIComponent(ref)}`);
-      setSaida(
-        `status ${r.status}\n\n` +
-          (typeof r.corpo === "string" ? r.corpo : JSON.stringify(r.corpo, null, 2))
-      );
-    } catch (err) {
-      setSaida(err.message);
-    } finally {
-      setRodando(false);
-    }
-  }
-
-  return (
-    <Card className={styles.health}>
-      <h2 className={styles.blocoTitulo}>
-        <Globe size={18} /> Consultar base de conhecimento
-      </h2>
-      <p className={styles.healthSub}>
-        Busca artigos da base de conhecimento interna a partir do servidor da aplicação.
-      </p>
-
-      <form className={styles.healthCol} onSubmit={consultar}>
-        <label className={styles.healthLabel}><Globe size={14} /> Referência do artigo</label>
-        <div className={styles.healthRow}>
-          <Input placeholder="/artigos/1.json" value={ref} onChange={(e) => setRef(e.target.value)} className="mono" />
-          <Button type="submit" variant="secondary" loading={rodando}>Consultar</Button>
-        </div>
-        {saida !== null && (
-          <pre className={styles.terminal}>
-            <span className={styles.terminalHead}><Terminal size={12} /> resposta</span>
-            {saida}
-          </pre>
-        )}
-      </form>
-    </Card>
   );
 }
 
