@@ -1,7 +1,0 @@
-# Copie para .pre-commit-config.yaml. Pega segredos antes do commit
-# (ex.: a história do .env versionado com JWT_SECRET/credenciais).
-repos:
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.4
-    hooks:
-      - id: gitleaks
