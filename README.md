@@ -16,13 +16,11 @@ aplicação foi construída — de propósito — com vulnerabilidades clássica
 (OWASP Top 10 / CWE conhecidos) e dependências com CVEs públicos, para servir
 de alvo em exercícios de:
 
-- **Trivy** — análise de composição de software (SCA) sobre `package-lock.json`
 - **Suricata** — detecção de tráfego malicioso na rede (DMZ)
 - **Wazuh** — SIEM/EDR rodando como agente no host da aplicação
 
-O laboratório completo inclui um roteador/firewall OPNsense, uma máquina de
-ataque Kali e um segundo host Debian interno (fora deste repositório), alvo de
-pivô/movimento lateral a partir desta aplicação.
+O laboratório completo inclui um roteador/firewall OPNsense e uma máquina de
+ataque Kali (fora deste repositório).
 
 📖 Documentação completa e fonte da verdade: workspace "Projeto Integrador" no
 Notion (Stack e Arquitetura, Especificação da Aplicação, Catálogo de
@@ -226,26 +224,21 @@ curl -i "http://localhost:3001/api/usuarios"
 curl -i "http://localhost:3001/api/usuarios" -H "X-Debug: trace-9f2c"
 ```
 
-Diferente das 3 dependências da tabela abaixo, este pacote **não tem CVE
-público** — o Trivy/SCA não tem base pra correlacionar e não o detecta. Só é
-interceptado em runtime: Wazuh (processo com conexão de saída anômala no
-startup, FIM sobre `node_modules`/`vendor`) e Suricata (tráfego C2 de saída).
+Diferente das 2 dependências da tabela abaixo, este pacote **não tem CVE
+público** — não há nada a correlacionar contra uma base de vulnerabilidades
+conhecidas. Só é interceptado em runtime: Wazuh (processo com conexão de
+saída anômala no startup, FIM sobre `node_modules`/`vendor`) e Suricata
+(tráfego C2 de saída).
 
-## Dependências vulneráveis conhecidas (detectáveis via Trivy/SCA)
+## Dependências vulneráveis conhecidas (CVE público)
 
 | Pacote       | Versão fixada       | CVE                                  | CWE                     |
 | ------------ | ------------------- | ------------------------------------ | ----------------------- |
 | jsonwebtoken | ≤ 8.5.1             | CVE-2022-23539 / 23540 / 23541       | CWE-287 (auth bypass)   |
-| express      | 4.19.1 (< 4.19.2)   | CVE-2024-29041                       | CWE-601 (open redirect) |
 | multer       | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS)           |
 
 Essas versões estão **fixadas de propósito** em `backend/package.json` — não
 devem ser atualizadas fora do escopo do exercício.
-
-> `express` (CVE-2024-29041) não tem item numerado no catálogo acima:
-> decisão de laboratório (2026-07-24) foi não criar rota dedicada só para
-> explorar essa CVE — ela fica só como achado de Trivy/SCA, sem vetor ativo
-> no app. Ver `TODO.md` para o histórico da discussão.
 
 ### Fingerprinting de versão — `GET /api/version`
 
@@ -259,9 +252,9 @@ curl "http://localhost:3001/api/version"
 ```
 
 > O pacote `express-audit-log` (item 8 acima) não aparece nesta tabela de
-> propósito: é uma dependência maliciosa sem CVE público, usada para
-> demonstrar o limite da SCA — o Trivy detecta CVE conhecido, não um
-> backdoor novo sem advisory público.
+> propósito: é uma dependência maliciosa sem CVE público — só a detecção em
+> runtime (Wazuh/Suricata) identifica esse tipo de ameaça, não a checagem de
+> dependências conhecidas.
 
 ### Painel interno esquecido — credenciais compartilhadas pela equipe
 
@@ -305,6 +298,6 @@ aplicação (CWE-250 — Execution with Unnecessary Privileges).
 ## Aviso final
 
 Todos os exemplos acima existem para permitir que ferramentas de detecção
-(Suricata/Wazuh/Trivy) identifiquem e alertem sobre a exploração no ambiente
+(Suricata/Wazuh) identifiquem e alertem sobre a exploração no ambiente
 isolado do laboratório. Não execute esses payloads contra sistemas que você
 não tem autorização explícita para testar.

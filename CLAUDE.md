@@ -6,9 +6,8 @@ Laboratório de segurança open source para PMEs (tese: código gerado por IA e
 dependências sem revisão como vetor central de comprometimento). Este repo é a
 **VM-alvo**: um portal de chamados ("Aurora Chamados") que a fictícia Aurora Dev
 entrega e hospeda em homologação para um cliente — aplicação de propósito
-acadêmico, **deliberadamente vulnerável**, para exercitar Trivy (SCA), Suricata
-e Wazuh (SIEM/EDR) em um laboratório com OPNsense, Kali e um host Debian
-interno (fora deste repo).
+acadêmico, **deliberadamente vulnerável**, para exercitar Suricata e Wazuh
+(SIEM/EDR) em um laboratório com OPNsense e Kali (fora deste repo).
 
 Documentação completa e fonte da verdade do projeto: workspace "Projeto
 Integrador" no Notion (Stack e Arquitetura, Especificação da Aplicação,
@@ -22,7 +21,7 @@ isso explicitamente pedido.** Elas são plantadas de propósito para serem
 detectadas/exploradas no laboratório. Isso inclui:
 
 - **Não atualizar** as dependências fixadas com CVE conhecido (ver tabela
-  abaixo) — o Trivy precisa encontrá-las no `package-lock.json`.
+  abaixo) — são exploradas diretamente no laboratório.
 - **Não adicionar** rate-limit, hashing forte, `algorithms` em `jwt.verify()`,
   sanitização de SQL, checagem de dono/admin, etc. nas rotas marcadas com ⚠️
   abaixo — a falta delas é o vetor de ataque planejado.
@@ -52,16 +51,14 @@ Esqueleto inicial, ainda não implementa a especificação:
 - **Frontend:** React (SPA), porta 5173
 - **Banco:** PostgreSQL 16, porta 5432
 - **Orquestração local:** `docker-compose.yml` (db + backend + frontend)
-- Papel no laboratório: app na DMZ com agente Wazuh instalado; segundo host
-  (LXC Debian interno, fora deste repo) é alvo de pivô/movimento lateral.
+- Papel no laboratório: app na DMZ com agente Wazuh instalado.
 
 ## Dependências vulneráveis (não atualizar sem discutir)
 
-| Pacote       | Versão fixada       | CVE                                  | CWE                     | Rota associada                                                                     |
-| ------------ | ------------------- | ------------------------------------ | ----------------------- | ---------------------------------------------------------------------------------- |
-| jsonwebtoken | ≤ 8.5.1             | CVE-2022-23539/23540/23541           | CWE-287 (auth bypass)   | login / verificação de JWT                                                         |
-| express      | 4.19.1 (< 4.19.2)   | CVE-2024-29041                       | CWE-601 (open redirect) | nenhuma — sem rota ativa, só achado de Trivy/SCA (decisão 2026-07-24, ver TODO.md) |
-| multer       | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS)           | upload de anexos                                                                   |
+| Pacote       | Versão fixada       | CVE                                  | CWE                     | Rota associada              |
+| ------------ | ------------------- | ------------------------------------ | ----------------------- | ---------------------------- |
+| jsonwebtoken | ≤ 8.5.1             | CVE-2022-23539/23540/23541           | CWE-287 (auth bypass)   | login / verificação de JWT   |
+| multer       | 1.4.4-lts.1 – 2.0.1 | CVE-2025-7338 (+2026-2359/3304/3520) | CWE-248 (DoS)           | upload de anexos             |
 
 `jsonwebtoken` é a mais relevante para a tese: não especificar `algorithms`
 em `jwt.verify()` é um erro típico de código gerado por IA sem revisão.
